@@ -3,19 +3,23 @@ package org.nick.utils;
 import com.ui4j.api.browser.BrowserEngine;
 import com.ui4j.api.browser.BrowserFactory;
 import com.ui4j.api.browser.Page;
-import org.htmlcleaner.HtmlCleaner;
+import com.ui4j.api.dom.Element;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Hello world!
  */
 public class App {
     public static void main(String[] args) throws IOException {
-        final HtmlCleaner htmlCleaner = new HtmlCleaner();
+
 
         final String url = "http://www.aliexpress.com/wholesale?initiative_id=SB_20150617021423&site=glo&shipCountry=ru&SearchText=bluetooth+mouse+-2.4Ghz+-keyboard&page=1";
-        /*final TagNode html = htmlCleaner.clean(new URL(url));
+        /*
+        final HtmlCleaner htmlCleaner = new HtmlCleaner();
+        final TagNode html = htmlCleaner.clean(new URL(url));
         final TagNode hslist = html.getElementsByAttValue("id", "hs-list-items", true, true)[0];
         final TagNode blist = html.getElementsByAttValue("id", "hs-below-list-items", true, true)[0];
 
@@ -35,10 +39,29 @@ public class App {
 
         final Page page = browser.navigate(url);
 
-        //page.show();
+        final Map<String, String> links = new HashMap<>();
+        for (Element ul : page.getDocument().queryAll("ul")) {
+            for (Element listItem : ul.queryAll(".list-item")) {
+                String link = null;
+                String store = null;
 
-        //page.getDocument().queryAll(".list-item").forEach(e -> System.out.println(e.getText()));
-        System.out.println(page.getDocument().queryAll(".list-item").size());
+                for (Element a : listItem.queryAll("a")) {
+                    final String href = a.getAttribute("href");
+                    if (href.toLowerCase().contains("/store") && !href.toLowerCase().contains("/feedback")) {
+                        store = href;
+                    }
+                    if (href.toLowerCase().contains("item") && href.toLowerCase().endsWith(".html")) {
+                        link = href;
+                    }
+
+
+                    if (link != null && store != null) {
+                        links.put(store, link);
+                        break;
+                    }
+                }
+            }
+        }
 
         page.close();
         browser.shutdown();
