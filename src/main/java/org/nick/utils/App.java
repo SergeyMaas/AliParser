@@ -19,7 +19,7 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         final List<Map<String, String>> mouseMap = getStoreMap("bluetooth", "mouse", "-2.4Ghz", "-keyboard");
-        final List<Map<String, String>> chargerMap = getStoreMap("3 port usb car charger");
+        final List<Map<String, String>> chargerMap = getStoreMap(0, 400, "3 port usb car charger");
 
         final Map<Map<String, String>, Map<String, String>> matches = new HashMap<>();
         for (Map<String, String> mouse : mouseMap) {
@@ -34,6 +34,10 @@ public class App {
     }
 
     public static List<Map<String, String>> getStoreMap(final String... query) {
+        return getStoreMap(-1, -1, query);
+    }
+
+    public static List<Map<String, String>> getStoreMap(final int minPrice, int maxPrice, final String... query) {
         final StringBuilder querySB = new StringBuilder();
 
         for (String s : query) {
@@ -45,9 +49,16 @@ public class App {
             }
         }
 
+        if (minPrice != -1) {
+            querySB.append("&minPrice=").append(minPrice);
+        }
+        if (maxPrice != -1) {
+            querySB.append("&maxPrice=").append(maxPrice);
+        }
+
         final String url = "http://www.aliexpress.com/wholesale?shipCountry=ru&page=1&groupsort=1&isFreeShip=y&SortType=total_tranpro_desc&SearchText=" + querySB.toString();
 
-        BrowserEngine browser = BrowserFactory.getWebKit();
+        //BrowserEngine browser = BrowserFactory.getWebKit();
 
         /*PageConfiguration config = new PageConfiguration(new Interceptor() {
 
