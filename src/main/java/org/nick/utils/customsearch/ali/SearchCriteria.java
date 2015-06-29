@@ -1,4 +1,4 @@
-package org.nick.utils;
+package org.nick.utils.customsearch.ali;
 
 /**
  * Created by VNikolaenko on 26.06.2015.
