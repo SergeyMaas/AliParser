@@ -24,8 +24,7 @@ public class Store {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Store store = (Store) o;
-        return Objects.equals(link, store.link) &&
-                Objects.equals(title, store.title);
+        return Objects.equals(link, store.link);
     }
 
     @Override

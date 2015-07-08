@@ -1,17 +1,10 @@
 package org.nick.utils.customsearch.ali;
 
-import com.ui4j.api.browser.BrowserEngine;
-import com.ui4j.api.browser.Page;
-import com.ui4j.api.browser.PageConfiguration;
-import com.ui4j.api.dom.Element;
-import com.ui4j.api.interceptor.Interceptor;
-import com.ui4j.api.interceptor.Request;
-import com.ui4j.api.interceptor.Response;
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
 
-import java.net.HttpCookie;
-import java.util.Arrays;
+import java.io.File;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -20,14 +13,15 @@ import java.util.concurrent.Callable;
  * Created by VNikolaenko on 29.06.2015.
  */
 public class SearchTask implements Callable<Set<SearchResult>> {
-    private BrowserEngine browser;
-
     private SearchCriteria criteria;
+    private File phantom;
+    private File phantomScript;
 
     final Set<SearchResult> results = new HashSet<>();
 
-    public SearchTask(BrowserEngine browser, SearchCriteria criteria) {
-        this.browser = browser;
+    public SearchTask(File phantom,File phantomScript, SearchCriteria criteria) {
+        this.phantom = phantom;
+        this.phantomScript = phantomScript;
         this.criteria = criteria;
     }
 
@@ -51,61 +45,55 @@ public class SearchTask implements Callable<Set<SearchResult>> {
 
         final String url = "http://www.aliexpress.com/wholesale?shipCountry=ru&page=1&groupsort=1&isFreeShip=y&SortType=total_tranpro_desc&SearchText=" + querySB.toString();
 
-        PageConfiguration config = new PageConfiguration(new Interceptor() {
+        //new HttpCookie("aep_usuc_f", "site=glo&region=RU&b_locale=en_US&c_tp=RUB");
 
-            @Override
-            public void beforeLoad(Request request) {
-                request.setCookies(Arrays.asList(
-                                new HttpCookie("aep_usuc_f", "site=glo&region=RU&b_locale=en_US&c_tp=RUB"))
-                );
-            }
+        final File page = File.createTempFile("ali", "page");
+        page.deleteOnExit();
 
-            @Override
-            public void afterLoad(Response response) {
+        final Process process = Runtime.getRuntime().exec("\"" + phantom.getAbsolutePath() + "\" \""
+                + phantomScript.getAbsolutePath() + "\" \""
+                + page.getAbsolutePath() + "\" \""
+                + url + "\"");
 
-            }
-        });
+        process.waitFor();
 
-        Page page = browser.navigate(url, config);
+        final TagNode node = new HtmlCleaner().clean(page);
 
-        final List<Element> elements = page.getDocument().queryAll("ul");
+        final List<? extends TagNode> elementList = node.getElementList(tagNode -> tagNode.getName().equals("li")
+                && tagNode.getAttributeByName("class") != null
+                && tagNode.getAttributeByName("class").toLowerCase().contains("list-item"), true);
 
-        // Normally Ui4j can detect page loads,
-        // but for the Ajax requests
-        // we cant detect if page is ready or not
-        // For such case we should wait manually until page is ready to use
-        Thread.sleep(10);
+        for (TagNode li : elementList) {
+            final SearchResult searchResult = new SearchResult();
 
-        for (Element ul : elements) {
-            for (Element listItem : ul.queryAll(".list-item")) {
-                final SearchResult searchResult = new SearchResult();
-
-                for (Element a : listItem.queryAll("a")) {
-                    final String href = a.getAttribute("href");
-                    if (href.toLowerCase().contains("/store") && !href.toLowerCase().contains("/feedback")) {
-                        searchResult.getStore().setLink(href);
-                        searchResult.getStore().setTitle(a.getText());
-                    }
-                    if ((href.toLowerCase().contains("searchResult") || href.toLowerCase().contains("item")) && href.toLowerCase().endsWith(".html")) {
-                        searchResult.getItem().setLink(href);
-                        searchResult.getItem().setTitle(a.getAttribute("title"));
-                    }
-                    if ((href.toLowerCase().contains("searchResult") || href.toLowerCase().contains("item")) && href.toLowerCase().endsWith("#thf")) {
-                        final String em = a.query("em").getText();
-                        final String ordersString = em.substring(em.indexOf('(') + 1, em.indexOf(')'));
-                        final int ordersCount = Integer.parseInt(ordersString);
-                        if (ordersCount > 0) {
-                            searchResult.getItem().setOrders(ordersCount);
-                        }
-                    }
-
-                    if (searchResult.isFilled()) {
-                        results.add(searchResult);
-                        break;
+            for (TagNode a : li.getElementListByName("a", true)) {
+                final String href = a.getAttributeByName("href");
+                if (href.toLowerCase().contains("/store") && !href.toLowerCase().contains("/feedback")) {
+                    searchResult.getStore().setLink(href);
+                    searchResult.getStore().setTitle(a.getText().toString());
+                }
+                if ((href.toLowerCase().contains("searchResult") || href.toLowerCase().contains("item")) && href.toLowerCase().endsWith(".html")) {
+                    searchResult.getItem().setLink(href);
+                    searchResult.getItem().setTitle(a.getAttributeByName("title"));
+                }
+                if ((href.toLowerCase().contains("searchResult") || href.toLowerCase().contains("item")) && href.toLowerCase().endsWith("#thf")) {
+                    final String em = a.getElementListByName("em", true).get(0).getText().toString();
+                    final String ordersString = em.substring(em.indexOf('(') + 1, em.indexOf(')'));
+                    final int ordersCount = Integer.parseInt(ordersString);
+                    if (ordersCount > 0) {
+                        searchResult.getItem().setOrders(ordersCount);
                     }
                 }
+
+                if (searchResult.isFilled()) {
+                    results.add(searchResult);
+                    break;
+                }
             }
+
         }
+
+        page.delete();
 
         return results;
     }
