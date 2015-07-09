@@ -2,6 +2,7 @@ package org.nick.utils.customsearch.ali;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.nick.utils.customsearch.ali.dto.SearchResult;
 
 import java.io.File;
 import java.util.HashSet;

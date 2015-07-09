@@ -1,4 +1,4 @@
-package org.nick.utils.customsearch.ali;
+package org.nick.utils.customsearch.ali.dto;
 
 import java.util.List;
 import java.util.Objects;
@@ -6,7 +6,7 @@ import java.util.Objects;
 /**
  * Created by VNikolaenko on 08.07.2015.
  */
-public class StoreMatch {
+public class StoreMatch extends DTO {
     private Store store;
     private List<SearchResult> items;
 

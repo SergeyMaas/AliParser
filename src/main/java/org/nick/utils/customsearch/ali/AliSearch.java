@@ -2,6 +2,9 @@ package org.nick.utils.customsearch.ali;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.nick.utils.customsearch.ali.dto.SearchResult;
+import org.nick.utils.customsearch.ali.dto.Store;
+import org.nick.utils.customsearch.ali.dto.StoreMatch;
 
 import java.io.File;
 import java.io.FileOutputStream;

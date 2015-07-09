@@ -1,11 +1,11 @@
-package org.nick.utils.customsearch.ali;
+package org.nick.utils.customsearch.ali.dto;
 
 import java.util.Objects;
 
 /**
  * Created by VNikolaenko on 26.06.2015.
  */
-public class SearchResult {
+public class SearchResult extends DTO {
     private Store store = new Store();
     private Item item = new Item();
 

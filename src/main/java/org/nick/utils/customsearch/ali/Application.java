@@ -1,5 +1,10 @@
 package org.nick.utils.customsearch.ali;
 
+import org.nick.utils.customsearch.ali.dto.Item;
+import org.nick.utils.customsearch.ali.dto.SearchResult;
+import org.nick.utils.customsearch.ali.dto.Store;
+import org.nick.utils.customsearch.ali.dto.StoreMatch;
+
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 

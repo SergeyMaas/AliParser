@@ -1,4 +1,4 @@
-package org.nick.utils.customsearch.ali;
+package org.nick.utils.customsearch.ali.dto;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * Created by VNikolaenko on 29.06.2015.
  */
-public class Item {
+public class Item extends DTO {
     private String link = "";
     private String title = "";
 
