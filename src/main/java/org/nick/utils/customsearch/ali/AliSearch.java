@@ -80,7 +80,7 @@ public class AliSearch {
             SearchTask.QueryResults queryResults = queryResultsFuture.get();
             for (SearchResult result : queryResults.getResults()) {
                 if (!matchesMap.containsKey(result.getStore())) {
-                    HashMap<String, Set<SearchResult>> map = new HashMap<>();
+                    Map<String, Set<SearchResult>> map = new HashMap<>();
                     for (String query : queries) {
                         map.put(query, new HashSet<>());
                     }
@@ -88,7 +88,7 @@ public class AliSearch {
                     matchesMap.put(result.getStore(), map);
                 }
 
-                matchesMap.get(result.getStore()).put(queryResults.getCriteria().getQuery(), queryResults.getResults());
+                matchesMap.get(result.getStore()).get(queryResults.getCriteria().getQuery()).add(result);
             }
         }
 

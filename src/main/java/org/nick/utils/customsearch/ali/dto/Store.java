@@ -1,12 +1,11 @@
 package org.nick.utils.customsearch.ali.dto;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Created by VNikolaenko on 29.06.2015.
  */
-public class Store implements Serializable {
+public class Store {
     private String link = "";
     private String title = "";
 
