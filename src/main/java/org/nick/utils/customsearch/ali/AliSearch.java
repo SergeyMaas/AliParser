@@ -1,5 +1,7 @@
 package org.nick.utils.customsearch.ali;
 
+import com.ui4j.api.browser.BrowserEngine;
+import com.ui4j.api.browser.BrowserFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.nick.utils.customsearch.ali.dto.SearchResult;
@@ -65,9 +67,14 @@ public class AliSearch {
     }
 
     public static List<StoreMatch> search(final String... queries) throws InterruptedException, ExecutionException, IOException {
+        System.setProperty("ui4j.headless", "true");
+
+        // get the instance of the webkit
+        BrowserEngine browser = BrowserFactory.getWebKit();
+
         final List<Callable<SearchTask.QueryResults>> criterias = new ArrayList<>(queries.length);
         for (String query : queries) {
-            criterias.add(new SearchTask(new SearchCriteria(query)));
+            criterias.add(new SearchTask(browser, new SearchCriteria(query)));
         }
 
         int poolSize = queries.length >= 10 ? 10 : queries.length;
@@ -93,6 +100,8 @@ public class AliSearch {
         }
 
         executor.shutdown();
+
+        browser.shutdown();
 
         return getStoreMatches(matchesMap);
     }
