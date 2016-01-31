@@ -1,5 +1,8 @@
 package org.nick.utils.customsearch.ali;
 
+import com.ui4j.api.browser.BrowserEngine;
+import com.ui4j.api.browser.BrowserFactory;
+import com.ui4j.api.browser.Page;
 import org.junit.Test;
 import org.nick.utils.customsearch.ali.dto.Item;
 import org.nick.utils.customsearch.ali.dto.SearchResult;
@@ -40,5 +43,22 @@ public class ApplicationTest {
             System.out.println("");
             System.out.println("");
         }
+    }
+
+    @Test
+    public void dir() {
+        System.setProperty("ui4j.headless", "true");
+
+        // get the instance of the webkit
+        BrowserEngine browser = BrowserFactory.getWebKit();
+
+        // navigate to blank page
+        Page page = browser.navigate("http://www.aliexpress.com/wholesale?SearchText=mouse");
+
+        // show the browser page
+        //page.show();
+
+        String html = (String) page.executeScript("document.documentElement.innerHTML");
+        System.out.println(html);
     }
 }
