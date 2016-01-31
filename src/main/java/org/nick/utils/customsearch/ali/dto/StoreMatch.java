@@ -1,14 +1,21 @@
 package org.nick.utils.customsearch.ali.dto;
 
-import java.util.List;
+import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Created by VNikolaenko on 08.07.2015.
  */
-public class StoreMatch extends DTO {
+public class StoreMatch implements Serializable {
     private Store store;
-    private List<SearchResult> items;
+    private Map<String, Set<SearchResult>> items;
+
+    public StoreMatch(Store store, Map<String, Set<SearchResult>> items) {
+        this.store = store;
+        this.items = items;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -23,11 +30,6 @@ public class StoreMatch extends DTO {
         return Objects.hash(store, items);
     }
 
-    public StoreMatch(Store store, List<SearchResult> items) {
-        this.store = store;
-        this.items = items;
-    }
-
     public Store getStore() {
         return store;
     }
@@ -36,11 +38,11 @@ public class StoreMatch extends DTO {
         this.store = store;
     }
 
-    public List<SearchResult> getItems() {
+    public Map<String, Set<SearchResult>> getItems() {
         return items;
     }
 
-    public void setItems(List<SearchResult> items) {
+    public void setItems(Map<String, Set<SearchResult>> items) {
         this.items = items;
     }
 }

@@ -6,25 +6,10 @@ import org.nick.utils.customsearch.ali.dto.SearchResult;
 import org.nick.utils.customsearch.ali.dto.Store;
 import org.nick.utils.customsearch.ali.dto.StoreMatch;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -32,16 +17,7 @@ import java.util.zip.ZipFile;
  * Created by VNikolaenko on 08.07.2015.
  */
 public class AliSearch {
-    private static File getPhantomScript() throws IOException {
-        final InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("test.js");
-
-        final File script = new File(getAppHome(), "test.js");
-        IOUtils.copy(resourceAsStream, new FileOutputStream(script));
-
-        return script;
-    }
-
-    private static File getPhantom() throws IOException {
+    public static File getPhantom() throws IOException {
         //TODO to property
         final File appHome = getAppHome();
 
@@ -89,55 +65,54 @@ public class AliSearch {
     }
 
     public static List<StoreMatch> search(final String... queries) throws InterruptedException, ExecutionException, IOException {
-        final File phantom = getPhantom();
-
-        final File phantomScript = getPhantomScript();
-
-        final List<Callable<Set<SearchResult>>> criterias = new LinkedList<>();
+        final List<Callable<SearchTask.QueryResults>> criterias = new ArrayList<>(queries.length);
         for (String query : queries) {
-            criterias.add(new SearchTask(phantom,phantomScript, new SearchCriteria(query)));
+            criterias.add(new SearchTask(new SearchCriteria(query)));
         }
 
         int poolSize = queries.length >= 10 ? 10 : queries.length;
 
         final ExecutorService executor = Executors.newFixedThreadPool(poolSize);
 
-        final Map<Store, List<SearchResult>> matchesMap = new HashMap<>();
+        final Map<Store, Map<String, Set<SearchResult>>> matchesMap = new HashMap<>();
 
-        final List<Future<Set<SearchResult>>> futureList = executor.invokeAll(criterias);
-        for (Future<Set<SearchResult>> result : futureList) {
-            //Compare
-            final Map<Store, List<SearchResult>> resultMatches = new HashMap<>();
-            result.get().stream().filter(searchResult -> matchesMap.isEmpty() || matchesMap.containsKey(searchResult.getStore())).forEach(searchResult -> {
-                if (resultMatches.containsKey(searchResult.getStore())) {
-                    resultMatches.get(searchResult.getStore()).add(searchResult);
-                } else {
-                    final List<SearchResult> match = new LinkedList<>();
-                    match.add(searchResult);
-                    resultMatches.put(searchResult.getStore(), match);
-                }
-            });
+        for (Future<SearchTask.QueryResults> queryResultsFuture : executor.invokeAll(criterias)) {
+            SearchTask.QueryResults queryResults = queryResultsFuture.get();
+            for (SearchResult result : queryResults.getResults()) {
+                if (!matchesMap.containsKey(result.getStore())) {
+                    HashMap<String, Set<SearchResult>> map = new HashMap<>();
+                    for (String query : queries) {
+                        map.put(query, new HashSet<>());
+                    }
 
-            //filter
-            for (Iterator<Map.Entry<Store, List<SearchResult>>> it = matchesMap.entrySet().iterator(); it.hasNext(); ) {
-                final Map.Entry<Store, List<SearchResult>> next = it.next();
-                if (!resultMatches.containsKey(next.getKey())) {
-                    it.remove();
+                    matchesMap.put(result.getStore(), map);
                 }
-            }
 
-            //Add new matches
-            for (Map.Entry<Store, List<SearchResult>> entry : resultMatches.entrySet()) {
-                if (matchesMap.containsKey(entry.getKey())) {
-                    matchesMap.get(entry.getKey()).addAll(entry.getValue());
-                } else {
-                    matchesMap.put(entry.getKey(), entry.getValue());
-                }
+                matchesMap.get(result.getStore()).put(queryResults.getCriteria().getQuery(), queryResults.getResults());
             }
         }
 
         executor.shutdown();
 
-        return matchesMap.entrySet().stream().map(entry -> new StoreMatch(entry.getKey(), entry.getValue())).collect(Collectors.toCollection(LinkedList::new));
+        return getStoreMatches(matchesMap);
+    }
+
+    private static List<StoreMatch> getStoreMatches(Map<Store, Map<String, Set<SearchResult>>> matchesMap) {
+        List<StoreMatch> result = new ArrayList<>();
+        for (Map.Entry<Store, Map<String, Set<SearchResult>>> storeEntry : matchesMap.entrySet()) {
+            boolean filled = true;
+
+            for (Map.Entry<String, Set<SearchResult>> queryEntry : storeEntry.getValue().entrySet()) {
+                if (queryEntry.getValue().isEmpty()) {
+                    filled = false;
+                    break;
+                }
+            }
+
+            if (filled) {
+                result.add(new StoreMatch(storeEntry.getKey(), storeEntry.getValue()));
+            }
+        }
+        return result;
     }
 }

@@ -2,32 +2,34 @@ package org.nick.utils.customsearch.ali;
 
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.htmlcleaner.conditional.ITagNodeCondition;
 import org.nick.utils.customsearch.ali.dto.SearchResult;
+import org.openqa.selenium.Cookie;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriverService;
+import org.openqa.selenium.remote.DesiredCapabilities;
 
-import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
  * Created by VNikolaenko on 29.06.2015.
  */
-public class SearchTask implements Callable<Set<SearchResult>> {
+public class SearchTask implements Callable<SearchTask.QueryResults> {
+    private Set<SearchResult> results = new HashSet<>();
     private SearchCriteria criteria;
-    private File phantom;
-    private File phantomScript;
 
-    final Set<SearchResult> results = new HashSet<>();
-
-    public SearchTask(File phantom,File phantomScript, SearchCriteria criteria) {
-        this.phantom = phantom;
-        this.phantomScript = phantomScript;
+    public SearchTask(SearchCriteria criteria) {
         this.criteria = criteria;
     }
 
+    private Optional<? extends TagNode> findByClass(TagNode node, final String... items) {
+        return node.getElementList((ITagNodeCondition) tagNode -> tagNode.getAttributeByName("class") != null && Arrays.asList(tagNode.getAttributeByName("class").split(" ")).containsAll(Arrays.asList(items)), true).stream().findFirst();
+    }
+
     @Override
-    public Set<SearchResult> call() throws Exception {
+    public QueryResults call() throws Exception {
         final StringBuilder querySB = new StringBuilder();
 
         if (criteria.getQuery() != null) {
@@ -46,19 +48,18 @@ public class SearchTask implements Callable<Set<SearchResult>> {
 
         final String url = "http://www.aliexpress.com/wholesale?shipCountry=ru&page=1&groupsort=1&isFreeShip=y&SortType=total_tranpro_desc&SearchText=" + querySB.toString();
 
-        //new HttpCookie("aep_usuc_f", "site=glo&region=RU&b_locale=en_US&c_tp=RUB");
+        DesiredCapabilities desireCaps = new DesiredCapabilities();
+        desireCaps.setCapability(PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, AliSearch.getPhantom().getAbsolutePath());
+        WebDriver driver = new PhantomJSDriver(desireCaps);
 
-        final File page = File.createTempFile("ali", "page");
-        page.deleteOnExit();
+        driver.manage().deleteAllCookies();
+        driver.manage().addCookie(new Cookie("aep_usuc_f", "site=glo&region=RU&b_locale=en_US&c_tp=RUB", "www.aliexpress.com", "/", null));
 
-        final Process process = Runtime.getRuntime().exec("\"" + phantom.getAbsolutePath() + "\" \""
-                + phantomScript.getAbsolutePath() + "\" \""
-                + page.getAbsolutePath() + "\" \""
-                + url + "\"");
+        driver.get(url);
 
-        process.waitFor();
+        final TagNode node = new HtmlCleaner().clean(driver.getPageSource());
 
-        final TagNode node = new HtmlCleaner().clean(page);
+        driver.quit();
 
         final List<? extends TagNode> elementList = node.getElementList(tagNode -> tagNode.getName().equals("li")
                 && tagNode.getAttributeByName("class") != null
@@ -66,36 +67,49 @@ public class SearchTask implements Callable<Set<SearchResult>> {
 
         for (TagNode li : elementList) {
             final SearchResult searchResult = new SearchResult();
+            Optional<? extends TagNode> storeNode = findByClass(li, "store");
+            if (storeNode.isPresent()) {
+                searchResult.getStore().setLink(storeNode.get().getAttributeByName("href"));
+                searchResult.getStore().setTitle(storeNode.get().getText().toString());
+            }
 
-            for (TagNode a : li.getElementListByName("a", true)) {
-                final String href = a.getAttributeByName("href");
-                if (href.toLowerCase().contains("/store") && !href.toLowerCase().contains("/feedback")) {
-                    searchResult.getStore().setLink(href);
-                    searchResult.getStore().setTitle(a.getText().toString());
-                }
-                if ((href.toLowerCase().contains("searchResult") || href.toLowerCase().contains("item")) && href.toLowerCase().endsWith(".html")) {
-                    searchResult.getItem().setLink(href);
-                    searchResult.getItem().setTitle(a.getAttributeByName("title"));
-                }
-                if ((href.toLowerCase().contains("searchResult") || href.toLowerCase().contains("item")) && href.toLowerCase().endsWith("#thf")) {
-                    final String em = a.getElementListByName("em", true).get(0).getText().toString();
-                    final String ordersString = em.substring(em.indexOf('(') + 1, em.indexOf(')'));
-                    final int ordersCount = Integer.parseInt(ordersString);
-                    if (ordersCount > 0) {
-                        searchResult.getItem().setOrders(ordersCount);
-                    }
-                }
+            Optional<? extends TagNode> itemNode = findByClass(li, "history-item", "product");
+            if (itemNode.isPresent()) {
+                searchResult.getItem().setLink(itemNode.get().getAttributeByName("href"));
+                searchResult.getItem().setTitle(itemNode.get().getAttributeByName("title"));
+            }
 
-                if (searchResult.isFilled()) {
-                    results.add(searchResult);
-                    break;
+            Optional<? extends TagNode> ordersNode = findByClass(li, "order-num-a");
+            if (ordersNode.isPresent()) {
+                final String em = ordersNode.get().getElementListByName("em", true).get(0).getText().toString();
+                final String ordersString = em.substring(em.indexOf('(') + 1, em.indexOf(')'));
+                final int ordersCount = Integer.parseInt(ordersString);
+                if (ordersCount > 0) {
+                    searchResult.getItem().setOrders(ordersCount);
                 }
             }
 
+            results.add(searchResult);
         }
 
-        page.delete();
+        return new QueryResults(criteria, results);
+    }
 
-        return results;
+    class QueryResults {
+        private SearchCriteria criteria;
+        private Set<SearchResult> results;
+
+        QueryResults(SearchCriteria criteria, Set<SearchResult> results) {
+            this.criteria = criteria;
+            this.results = results;
+        }
+
+        public SearchCriteria getCriteria() {
+            return criteria;
+        }
+
+        public Set<SearchResult> getResults() {
+            return results;
+        }
     }
 }

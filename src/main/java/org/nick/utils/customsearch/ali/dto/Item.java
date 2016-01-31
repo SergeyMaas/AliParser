@@ -2,12 +2,13 @@ package org.nick.utils.customsearch.ali.dto;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Created by VNikolaenko on 29.06.2015.
  */
-public class Item extends DTO {
+public class Item implements Serializable {
     private String link = "";
     private String title = "";
 

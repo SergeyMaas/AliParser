@@ -1,11 +1,12 @@
 package org.nick.utils.customsearch.ali.dto;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Created by VNikolaenko on 26.06.2015.
  */
-public class SearchResult extends DTO {
+public class SearchResult implements Serializable {
     private Store store = new Store();
     private Item item = new Item();
 
@@ -38,9 +39,5 @@ public class SearchResult extends DTO {
 
     public void setItem(Item item) {
         this.item = item;
-    }
-
-    public boolean isFilled() {
-        return store != null && store.isFilled() && item != null && item.isFilled();
     }
 }
