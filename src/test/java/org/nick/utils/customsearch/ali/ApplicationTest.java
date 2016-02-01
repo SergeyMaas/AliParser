@@ -1,11 +1,13 @@
 package org.nick.utils.customsearch.ali;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.nick.utils.customsearch.ali.dto.Item;
 import org.nick.utils.customsearch.ali.dto.SearchResult;
 import org.nick.utils.customsearch.ali.dto.Store;
 import org.nick.utils.customsearch.ali.dto.StoreMatch;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -15,7 +17,11 @@ import java.util.Set;
 public class ApplicationTest {
     @Test
     public void main() throws Exception {
-        for (StoreMatch match : AliSearch.search("mouse", "charger")) {
+        List<StoreMatch> search = AliSearch.search("mouse", "charger");
+
+        Assert.assertTrue(!search.isEmpty());
+
+        for (StoreMatch match : search) {
             final Store store = match.getStore();
             System.out.println("---------------------Store--------------------------------");
             System.out.println("----------------------------------------------------------");
@@ -41,5 +47,7 @@ public class ApplicationTest {
             System.out.println("");
             System.out.println("");
         }
+
+
     }
 }

@@ -1,6 +1,5 @@
 package org.nick.utils.customsearch.ali.dto;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -8,7 +7,7 @@ import java.util.Set;
 /**
  * Created by VNikolaenko on 08.07.2015.
  */
-public class StoreMatch implements Serializable {
+public class StoreMatch {
     private Store store;
     private Map<String, Set<SearchResult>> items;
 

@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
  * Created by VNikolaenko on 08.07.2015.
  */
 class AliSearch {
-    static List<StoreMatch> search(final String... queries) throws InterruptedException, ExecutionException, IOException {
+    static List<StoreMatch> search(final String... queries) {
         System.setProperty("ui4j.headless", "true");
 
         final List<SearchCriteria> criterias = new ArrayList<>(queries.length);
