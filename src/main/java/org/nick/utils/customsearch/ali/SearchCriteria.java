@@ -6,6 +6,7 @@ package org.nick.utils.customsearch.ali;
 public class SearchCriteria {
     private String query;
     private int minPrice;
+    private int pages4Processing;
 
     public int getMinPrice() {
         return minPrice;
@@ -30,9 +31,10 @@ public class SearchCriteria {
         this.query = querySB.toString();
         this.minPrice = -1;
         this.maxPrice = -1;
+        this.pages4Processing = 5;
     }
 
-    public SearchCriteria(int minPrice, int maxPrice, String... queries) {
+    public SearchCriteria(int minPrice, int maxPrice, int pages4Processing, String... queries) {
         final StringBuilder querySB = new StringBuilder();
 
         for (String query : queries) {
@@ -47,6 +49,7 @@ public class SearchCriteria {
         this.query = querySB.toString();
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
+        this.pages4Processing = pages4Processing;
     }
 
     public int getMaxPrice() {
@@ -66,5 +69,13 @@ public class SearchCriteria {
 
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    public int getPages4Processing() {
+        return pages4Processing;
+    }
+
+    public void setPages4Processing(int pages4Processing) {
+        this.pages4Processing = pages4Processing;
     }
 }

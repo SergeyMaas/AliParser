@@ -1,8 +1,5 @@
 package org.nick.utils.customsearch.ali;
 
-import com.ui4j.api.browser.BrowserEngine;
-import com.ui4j.api.browser.BrowserFactory;
-import com.ui4j.api.browser.Page;
 import org.junit.Test;
 import org.nick.utils.customsearch.ali.dto.Item;
 import org.nick.utils.customsearch.ali.dto.SearchResult;
@@ -24,10 +21,13 @@ public class ApplicationTest {
             System.out.println("----------------------------------------------------------");
             System.out.println("Title: " + store.getTitle());
             System.out.println("Link: " + store.getLink());
+            for (Map.Entry<String, Set<SearchResult>> entry : match.getItems().entrySet()) {
+                System.out.println("Item: " + entry.getKey() + " " + entry.getValue().size());
+            }
             System.out.println("---------------------Items--------------------------------");
 
             for (Map.Entry<String, Set<SearchResult>> entry : match.getItems().entrySet()) {
-                System.out.println("Title: " + entry.getKey() + " " + entry.getValue().size());
+                System.out.println("======================= " + entry.getKey() + " ===============================");
 
                 for (SearchResult result : entry.getValue()) {
                     final Item item = result.getItem();
@@ -36,8 +36,6 @@ public class ApplicationTest {
                     System.out.println("Orders: " + item.getOrders());
                     System.out.println("----------------------------------------------------");
                 }
-
-                System.out.println("======================================================");
             }
 
             System.out.println("");
