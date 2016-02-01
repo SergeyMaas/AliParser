@@ -34,15 +34,7 @@ public class StoreMatch implements Serializable {
         return store;
     }
 
-    public void setStore(Store store) {
-        this.store = store;
-    }
-
     public Map<String, Set<SearchResult>> getItems() {
         return items;
-    }
-
-    public void setItems(Map<String, Set<SearchResult>> items) {
-        this.items = items;
     }
 }

@@ -11,15 +11,7 @@ public class SearchResult {
         return store;
     }
 
-    public void setStore(Store store) {
-        this.store = store;
-    }
-
     public Item getItem() {
         return item;
-    }
-
-    public void setItem(Item item) {
-        this.item = item;
     }
 }

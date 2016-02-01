@@ -20,14 +20,14 @@ import java.util.stream.IntStream;
 /**
  * Created by VNikolaenko on 29.06.2015.
  */
-public class SearchTask {
-    final static BrowserEngine browser = BrowserFactory.getWebKit();
+class SearchTask {
+    private final static BrowserEngine browser = BrowserFactory.getWebKit();
 
     private static Optional<? extends TagNode> findByClass(TagNode node, final String... items) {
         return node.getElementList((ITagNodeCondition) tagNode -> tagNode.getAttributeByName("class") != null && Arrays.asList(tagNode.getAttributeByName("class").split(" ")).containsAll(Arrays.asList(items)), true).stream().findFirst();
     }
 
-    public static QueryResults processCriteria(final SearchCriteria criteria) {
+    static QueryResults processCriteria(final SearchCriteria criteria) {
         final Set<SearchResult> results = new HashSet<>();
 
         final StringBuilder querySB = new StringBuilder();
@@ -49,7 +49,7 @@ public class SearchTask {
         IntStream.range(1, criteria.getPages4Processing() + 1).boxed().parallel().forEach(i -> {
             final String url = "http://www.aliexpress.com/wholesale?shipCountry=ru&groupsort=1&isFreeShip=y&SortType=total_tranpro_desc&SearchText=" + querySB.toString() + "&page=" + i;
 
-            final TagNode node = new HtmlCleaner().clean(getUrlHtmlUI4J(browser, url));
+            final TagNode node = new HtmlCleaner().clean(getUrlHtmlUI4J(url));
 
             final List<? extends TagNode> elementList = node.getElementList(tagNode -> tagNode.getName().equals("li")
                     && tagNode.getAttributeByName("class") != null
@@ -87,24 +87,19 @@ public class SearchTask {
         return new QueryResults(criteria, results);
     }
 
-    private static String getUrlHtmlUI4J(BrowserEngine browser, String url) {
-        Page page = browser.navigate(url, new PageConfiguration(new Interceptor() {
+    private static String getUrlHtmlUI4J(String url) {
+        try (Page page = browser.navigate(url, new PageConfiguration(new Interceptor() {
             @Override
             public void beforeLoad(Request request) {
-                request.setCookies(Arrays.asList(new HttpCookie("aep_usuc_f", "site=glo&region=RU&b_locale=en_US&c_tp=RUB")));
+                request.setCookies(Collections.singletonList(new HttpCookie("aep_usuc_f", "site=glo&region=RU&b_locale=en_US&c_tp=RUB")));
             }
 
             @Override
             public void afterLoad(Response response) {
-
             }
-        }));
-
-        try {
+        }))) {
             // navigate to blank page
             return (String) page.executeScript("document.documentElement.innerHTML");
-        } finally {
-            page.close();
         }
     }
 }

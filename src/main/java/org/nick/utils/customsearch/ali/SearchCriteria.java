@@ -7,16 +7,9 @@ public class SearchCriteria {
     private String query;
     private int minPrice;
     private int pages4Processing;
+    private int maxPrice;
 
-    public int getMinPrice() {
-        return minPrice;
-    }
-
-    public void setMinPrice(int minPrice) {
-        this.minPrice = minPrice;
-    }
-
-    public SearchCriteria(String... queries) {
+    SearchCriteria(String... queries) {
         final StringBuilder querySB = new StringBuilder();
 
         for (String query : queries) {
@@ -34,7 +27,7 @@ public class SearchCriteria {
         this.pages4Processing = 5;
     }
 
-    public SearchCriteria(int minPrice, int maxPrice, int pages4Processing, String... queries) {
+    /*public SearchCriteria(int minPrice, int maxPrice, int pages4Processing, String... queries) {
         final StringBuilder querySB = new StringBuilder();
 
         for (String query : queries) {
@@ -50,32 +43,21 @@ public class SearchCriteria {
         this.minPrice = minPrice;
         this.maxPrice = maxPrice;
         this.pages4Processing = pages4Processing;
-    }
+    }*/
 
-    public int getMaxPrice() {
-
+    int getMaxPrice() {
         return maxPrice;
     }
 
-    public void setMaxPrice(int maxPrice) {
-        this.maxPrice = maxPrice;
-    }
-
-    private int maxPrice;
-
-    public String getQuery() {
+    String getQuery() {
         return query;
     }
 
-    public void setQuery(String query) {
-        this.query = query;
-    }
-
-    public int getPages4Processing() {
+    int getPages4Processing() {
         return pages4Processing;
     }
 
-    public void setPages4Processing(int pages4Processing) {
-        this.pages4Processing = pages4Processing;
+    int getMinPrice() {
+        return minPrice;
     }
 }
